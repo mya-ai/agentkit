@@ -4,8 +4,10 @@
 
 Please do not open a public issue for a security vulnerability.
 
-Report it privately through GitHub's [Security Advisories](https://github.com/mya-ai/agentkit/security/advisories/new), or by
-email to **security@heymya.ai**. We will acknowledge within a few business days.
+Email **security@heymya.ai** — that always works. You can also report it privately through GitHub's
+[Security Advisories](https://github.com/mya-ai/agentkit/security/advisories/new); if that page 404s,
+the setting is not enabled yet, so use the email and please mention it. We will acknowledge within a
+few business days.
 
 Please include what an attacker can do, the affected version or commit, and a reproduction if you
 have one.
