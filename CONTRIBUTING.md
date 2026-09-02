@@ -48,7 +48,7 @@ gofmt -l .              # must print nothing
 go vet ./...
 go test -race ./...
 ./scripts/check-deps.sh # the dependency budget
-golangci-lint run       # optional locally; runs in CI
+golangci-lint run       # optional locally; runs in CI (pin v2.1.0 to match it)
 ```
 
 The doc guards are part of `go test`: if you move code, `TestREADMEAnchorsResolve` and
@@ -60,6 +60,18 @@ The doc guards are part of `go test`: if you move code, `TestREADMEAnchorsResolv
 State the failure, then the fix. `fix(loop): a judge error discarded the verdict` beats
 `fix: improve error handling`. If a defect shipped, say what it cost — that sentence is why the next
 person does not reintroduce it.
+
+## Versioning
+
+If your change breaks an existing symbol, moves a tool to a **less** restrictive tier, or adds a
+method to an interface consumers implement, say so in the PR — that is a minor bump while we are on
+v0.x, and it needs a release note. [VERSIONING.md](VERSIONING.md) has the rules and the
+what-counts-as-breaking table.
+
+## Code of conduct
+
+The design rules here are blunt about *code*. That is aimed at designs, never at people — see
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## License
 

@@ -58,7 +58,7 @@ func TestREADMESampleCompiles(t *testing.T) {
 		}
 	}
 	write("main.go", sample)
-	write("go.mod", "module readmesample\n\ngo 1.25.3\n\nrequire github.com/mya-ai/agentkit v0.0.0\n\nreplace github.com/mya-ai/agentkit => "+root+"\n")
+	write("go.mod", "module readmesample\n\ngo 1.25\n\nrequire github.com/mya-ai/agentkit v0.0.0\n\nreplace github.com/mya-ai/agentkit => "+root+"\n")
 
 	// GOFLAGS=-mod=mod so the temp module can resolve; the sample must need no
 	// dependency beyond the kit itself.

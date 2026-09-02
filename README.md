@@ -34,7 +34,7 @@ deliberately stateless. That is a different shape, and this kit is not it.
 go get github.com/mya-ai/agentkit
 ```
 
-Requires Go 1.25.3+.
+Requires Go 1.25 or newer.
 
 **See it work first**, with no credentials and no setup:
 
@@ -180,6 +180,7 @@ instead of retrying into a provider that is already shedding load.
 | [docs/design/architecture.md](docs/design/architecture.md) | why it is shaped this way |
 | [docs/design/agent-runtime.md](docs/design/agent-runtime.md) | the load-bearing decisions |
 | [docs/contributing.md](docs/contributing.md) | what gets a PR rejected |
+| [VERSIONING.md](VERSIONING.md) | what a version number promises, and what counts as breaking |
 | [example/](example/) | three reference agents, plus a runnable demo |
 
 Every `file:line` anchor in the reference is asserted against source in CI, so the docs cannot drift
@@ -195,6 +196,20 @@ unadopted — including the ones production consumers *declined*, and why. Where
 bug" or "measured", that is where the measurement came from.
 
 It is honest about gaps: see **[Not built](docs/reference.md#not-built)** before assuming a feature exists.
+
+### Versioning
+
+**v0.x — pin it.** While the major version is 0, the *minor* version is the breaking-change signal:
+`v0.2.0` may break what `v0.1.0` compiled, while `v0.1.1` will not. `go.mod` pins for you.
+
+Two rules worth knowing before you upgrade, because neither is what plain semver would tell you:
+
+- A tool moving to a **less** restrictive tier — something withheld as a proposal now runs live — is
+  a **breaking** change, even though nothing fails to compile. The blast radius is your data.
+- A tool moving to a **more** restrictive tier ships in a **patch**, immediately, with no deprecation
+  window. The kit will always resolve a tier question toward withholding.
+
+Full rules, the what-counts-as-breaking table, and what v1.0.0 waits on: **[VERSIONING.md](VERSIONING.md)**.
 
 ## License
 

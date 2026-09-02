@@ -21,7 +21,7 @@ turn-by-turn chat is a different shape and this is not it.
 go get github.com/mya-ai/agentkit
 ```
 
-Go 1.25.3 or later. That is the only external dependency you take on: no provider SDK, no queue,
+Go 1.25 or later. That is the only external dependency you take on: no provider SDK, no queue,
 no database.
 
 Before writing anything, watch the central guarantee hold. Clone the repo and run the demo — no

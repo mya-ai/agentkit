@@ -1,0 +1,21 @@
+# The kit's dependency budget (scripts/check-deps.sh) caps the Go module graph at
+# five external packages, so the Go ecosystem here is deliberately near-empty. The
+# load-bearing half of this file is `github-actions`: a pinned action is a
+# dependency too, and an unmaintained one is the likelier supply-chain problem.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
