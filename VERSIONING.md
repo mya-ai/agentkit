@@ -19,6 +19,21 @@ Rules, all of them load-bearing for Go tooling:
   moved tag serves different bytes to different people, permanently. A bad release is superseded by
   the next patch, never retagged. If a release is actively harmful, retract it in `go.mod` and
   supersede it — do not delete it.
+
+  ⚠️ **"Nothing has fetched it yet" is a weaker guarantee than it sounds, and we learned that the
+  hard way.** `v0.1.0` was re-cut once, before the repository was public, on the reasoning that the
+  proxy had cached nothing — which was true and verifiable (`proxy.golang.org` and `sum.golang.org`
+  both 404'd). It was still wrong. A consumer had already pinned the tag by *authenticated git clone*,
+  which never touches the proxy, and their `go.sum` recorded the pre-re-tag hash. Their local builds
+  stayed green for hours afterwards, because the module cache was trusted and never re-fetched; only
+  a Docker build with no cache and no git could see the mismatch, and even then `go mod verify` kept
+  failing until `go clean -modcache`.
+
+  So the check before moving a tag is **not** "has the proxy cached it?" — it is "could anyone,
+  anywhere, already have this version string in a `go.sum`?" While a repository is private the answer
+  is invisible to you, because those fetches leave no public trace. Prefer superseding with a new
+  patch version even pre-release; a burnt version number costs nothing next to a checksum mismatch in
+  someone else's build.
 - **Annotated, signed, on `main`.** `git tag -s -a` with the release note as the message, on a commit
   that is already on `main` and green in CI.
 - **`v2` and beyond change the import path.** Go requires `/v2` in the module path for major version
@@ -105,11 +120,30 @@ git tag -s -a v0.1.0 -m "v0.1.0 — <one line>"
 git push origin v0.1.0
 ```
 
-Then confirm the proxy has it, which is also the first real test that the module path resolves:
+Then confirm the proxy has it, which is also the first real test that the module path resolves.
+
+⚠️ **The obvious command lies.** A plain `go list -m` or `go get` will silently fall back to an
+authenticated git clone and report success for a module the public cannot fetch at all. That mistake
+was made three separate times during this repository's first release, by two different people, and a
+green exit code looked identical in every one of them. Force proxy-only, disable the git fallback,
+and use a cache that cannot already hold the answer:
 
 ```bash
-GOPROXY=proxy.golang.org go list -m github.com/mya-ai/agentkit@v0.1.0
+GOPROXY=https://proxy.golang.org \
+GIT_TERMINAL_PROMPT=0 \
+GOMODCACHE=$(mktemp -d) \
+  go get github.com/mya-ai/agentkit@v0.1.0
 ```
+
+`GIT_TERMINAL_PROMPT=0` is the load-bearing flag: without it git prompts or uses ambient credentials,
+and the test proves nothing. Then check the notarised record agrees with what you just downloaded:
+
+```bash
+curl -s https://sum.golang.org/lookup/github.com/mya-ai/agentkit@v0.1.0
+```
+
+Note that a stale negative cache can make `curl` of `/@v/<version>.info` return 404 for a while after
+a repository goes public, while `go get` and `/@latest` both work. Believe `go get`.
 
 ## Release note format
 
