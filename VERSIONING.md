@@ -34,6 +34,11 @@ Rules, all of them load-bearing for Go tooling:
   is invisible to you, because those fetches leave no public trace. Prefer superseding with a new
   patch version even pre-release; a burnt version number costs nothing next to a checksum mismatch in
   someone else's build.
+
+  And note what does **not** answer that question: fork count, star count, or any other public
+  signal. Those measure who *watched* the repository, never who ran `go get` against it — the very
+  invisibility that makes the case dangerous. There is no observation that closes this; only a
+  question you must ask each consumer directly, or avoid needing to ask by not moving the tag.
 - **Annotated, signed, on `main`.** `git tag -s -a` with the release note as the message, on a commit
   that is already on `main` and green in CI.
 - **`v2` and beyond change the import path.** Go requires `/v2` in the module path for major version
