@@ -367,17 +367,22 @@ Violating these causes known bugs.
    drifts silently, and if the prompt is runtime-overridable no test can catch it.
 2. **Never execute `verdict.Calls` directly — always via `GateProgram`.** The tier gate is the only
    thing stopping an irreversible auto-run.
-3. **A `GateProgram` error rejects the whole program.** Never drop the bad call and continue: dropping
+3. **A duplicate capability name fails the gate.** `caps` is a slice (the tier is read from the
+   **first** match) while `ToolSet` handlers are a map (`Add` **overwrites**). A read-only `act`
+   followed by an irreversible `act` therefore gated as auto-runnable and then executed the
+   irreversible handler — silently. `GateProgram` now rejects duplicates outright, in either order.
+   Declare each capability exactly once.
+4. **A `GateProgram` error rejects the whole program.** Never drop the bad call and continue: dropping
    one op of a multi-op program half-applies a write.
-4. **Never surface the judge's text to a user.** `Pair` ships the executor's output by design.
-5. **Do not use `Pair` with a same-model, same-context judge for quality.** Ungrounded self-critique
+5. **Never surface the judge's text to a user.** `Pair` ships the executor's output by design.
+6. **Do not use `Pair` with a same-model, same-context judge for quality.** Ungrounded self-critique
    degrades results. Use `RulesVerifier`, or a differently-grounded judge.
-6. **`RoleSpec.Model` is an opaque string.** A provider-prefixed convention like `provider/model-name`
+7. **`RoleSpec.Model` is an opaque string.** A provider-prefixed convention like `provider/model-name`
    works well when one adapter fronts several providers, but the kit never parses it and a bare name is
    perfectly fine.
-7. **`OutcomeSilent` is success**, not failure.
-8. **Order `VerifierChain` cheap → expensive**: deterministic rules first, an LLM critic last.
-9. **Declare a tier explicitly.** The zero value is a rejection, not "read-only".
+8. **`OutcomeSilent` is success**, not failure.
+9. **Order `VerifierChain` cheap → expensive**: deterministic rules first, an LLM critic last.
+10. **Declare a tier explicitly.** The zero value is a rejection, not "read-only".
 
 ---
 

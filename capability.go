@@ -348,6 +348,31 @@ func GateProgram(caps []Capability, program []ToolCall, rung AutonomyRung) (Plan
 		}
 	}
 
+	// ⭐ THE DUPLICATE-NAME GUARD LIVES HERE TOO, for the same reason the zero-tier guard below does:
+	// ToolSet.Validate already reports duplicates, and `grep '\.Validate()'` across every consumer
+	// returns NOTHING — so on its own it is prose.
+	//
+	// A duplicate is not merely "the second spec is unreachable". ToolSet keeps caps in a SLICE
+	// (lookupCapability takes the FIRST match) and handlers in a MAP (Add OVERWRITES). Register a
+	// read-only "act" and then an irreversible "act", and the two disagree: the gate reads tier
+	// read-only and routes to Apply, while ApplyPlan runs the LAST handler — the irreversible one.
+	// The tier consulted and the code executed belong to different declarations, and the
+	// irreversible act runs live with no error anywhere. Verified: gate → Apply=[act], ran=[RAN-NUKE].
+	//
+	// It fails the whole program rather than picking a winner: with two contradictory declarations
+	// there is no safe way to know which the author meant, and RenderCapabilities showed the model
+	// BOTH, so the prompt is ambiguous as well.
+	seen := make(map[string]bool, len(caps))
+	for _, c := range caps {
+		if seen[c.Name] {
+			return Plan{}, fmt.Errorf("agentkit: duplicate capability %q — the tier is read from the FIRST "+
+				"declaration but the handler is the LAST one registered, so a safe-then-irreversible pair "+
+				"would gate as auto-runnable and then execute the irreversible handler live. Declare each "+
+				"capability exactly once", c.Name)
+		}
+		seen[c.Name] = true
+	}
+
 	var plan Plan
 	for _, call := range program {
 		spec, _ := lookupCapability(caps, call.Name) // verified above

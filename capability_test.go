@@ -1,6 +1,7 @@
 package agentkit
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -450,5 +451,80 @@ func TestArgInt_AcceptsEveryIntegerSpelling(t *testing.T) {
 				t.Errorf("ArgInt(%#v) = (%d, %v), want (%d, %v)", tc.v, got, ok, tc.want, tc.ok)
 			}
 		})
+	}
+}
+
+// A DUPLICATE CAPABILITY NAME MUST FAIL THE GATE, NOT SPLIT THE BRAIN.
+//
+// This was a real breach, found by adversarial review before the first tag. ToolSet keeps caps in a
+// SLICE (lookupCapability takes the FIRST match) and handlers in a MAP (Add OVERWRITES). Declaring a
+// read-only "act" and then an irreversible "act" made the two disagree: GateProgram read tier
+// read-only and routed the call to Apply, and ApplyPlan then ran the LAST registered handler — the
+// irreversible one. Observed before the fix: gate → Apply=[act], Propose=[], ApplyPlan errs=[],
+// executed=[RAN-NUKE]. An irreversible act ran live, silently, which is the one thing this kit
+// promises cannot happen.
+//
+// ToolSet.Validate had reported the duplicate all along — but Validate is off the gating path (the
+// same reason the zero-tier guard was moved onto it), so the guard belongs HERE.
+func TestGateProgramRejectsDuplicateCapabilityName(t *testing.T) {
+	caps := []Capability{
+		{Name: "act", Description: "safe read", Tier: TierReadOnlyExplicit},
+		{Name: "act", Description: "delete everything", Tier: TierIrreversible},
+	}
+
+	_, err := GateProgram(caps, []ToolCall{{Name: "act"}}, RungAuto)
+	if err == nil {
+		t.Fatal("BREACH: a duplicate name gated cleanly — the read-only spec decides the tier while the " +
+			"irreversible handler is what ApplyPlan would run")
+	}
+	if !strings.Contains(err.Error(), "duplicate capability") {
+		t.Errorf("error should name the duplicate, got: %v", err)
+	}
+}
+
+// The breach was order-dependent — irreversible-first happened to route to Propose and look safe.
+// Both orderings must fail, or the guarantee holds only by luck of declaration order.
+func TestGateProgramRejectsDuplicateInEitherOrder(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		caps []Capability
+	}{
+		{"safe first (the breach)", []Capability{
+			{Name: "act", Description: "safe", Tier: TierReadOnlyExplicit},
+			{Name: "act", Description: "nuke", Tier: TierIrreversible},
+		}},
+		{"irreversible first (looked safe)", []Capability{
+			{Name: "act", Description: "nuke", Tier: TierIrreversible},
+			{Name: "act", Description: "safe", Tier: TierReadOnlyExplicit},
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if _, err := GateProgram(tc.caps, []ToolCall{{Name: "act"}}, RungAuto); err == nil {
+				t.Error("duplicate name gated cleanly")
+			}
+		})
+	}
+}
+
+// The end-to-end assertion: whatever the gate does, the irreversible handler must never run.
+func TestDuplicateNameNeverExecutesIrreversibleHandler(t *testing.T) {
+	type st struct{ log []string }
+
+	ts := NewToolSet[st]()
+	ts.Add(Capability{Name: "act", Description: "safe read", Tier: TierReadOnlyExplicit},
+		func(_ context.Context, s *st, _ ToolCall) error { s.log = append(s.log, "RAN-SAFE"); return nil })
+	ts.Add(Capability{Name: "act", Description: "delete everything", Tier: TierIrreversible},
+		func(_ context.Context, s *st, _ ToolCall) error { s.log = append(s.log, "RAN-NUKE"); return nil })
+
+	var s st
+	plan, err := ts.GateProgram([]ToolCall{{Name: "act"}}, RungAuto)
+	if err == nil {
+		// If a future change lets this gate, the guarantee must still hold downstream.
+		ts.ApplyPlan(context.Background(), &s, plan)
+	}
+	for _, entry := range s.log {
+		if entry == "RAN-NUKE" {
+			t.Fatal("BREACH: the irreversible handler executed live via duplicate-name shadowing")
+		}
 	}
 }
