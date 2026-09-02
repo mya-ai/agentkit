@@ -48,7 +48,7 @@ gofmt -l .              # must print nothing
 go vet ./...
 go test -race ./...
 ./scripts/check-deps.sh # the dependency budget
-golangci-lint run       # optional locally; runs in CI (pin v2.1.0 to match it)
+golangci-lint run       # optional locally; runs in CI (pin v2.13.2 to match it)
 ```
 
 The doc guards are part of `go test`: if you move code, `TestREADMEAnchorsResolve` and
