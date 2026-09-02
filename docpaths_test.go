@@ -20,7 +20,10 @@ import (
 // right. This compares against `git ls-files`, which stores one canonical spelling
 // regardless of the filesystem underneath.
 func TestGuardedDocPathsExist(t *testing.T) {
-	out, err := exec.Command("git", "ls-files", "docs").Output()
+	// Every tracked path, not just docs/ — a guarded doc may live at the repository root
+	// (AGENTS.md does). Scoping this to "docs" made a root-level path unfindable and so
+	// permanently untracked-looking, which is a guard that fails for the wrong reason.
+	out, err := exec.Command("git", "ls-files").Output()
 	if err != nil {
 		t.Skipf("git unavailable (%v) — cannot check canonical spelling", err)
 	}
@@ -29,7 +32,7 @@ func TestGuardedDocPathsExist(t *testing.T) {
 		tracked[p] = true
 	}
 	if len(tracked) == 0 {
-		t.Skip("no tracked files under docs/ — nothing to check")
+		t.Skip("no tracked files — nothing to check")
 	}
 
 	for _, p := range docPaths {

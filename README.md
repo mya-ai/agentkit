@@ -182,6 +182,7 @@ instead of retrying into a provider that is already shedding load.
 | [docs/contributing.md](docs/contributing.md) | what gets a PR rejected |
 | [VERSIONING.md](VERSIONING.md) | what a version number promises, and what counts as breaking |
 | [example/](example/) | three reference agents, plus a runnable demo |
+| [AGENTS.md](AGENTS.md) | if you are an AI coding agent: start here |
 
 Every `file:line` anchor in the reference is asserted against source in CI, so the docs cannot drift
 the way documentation usually does.
