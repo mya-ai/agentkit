@@ -1,14 +1,16 @@
 # agentkit
 
-**Autonomous Go agents that change things — safely.**
+**A Go framework for building LLM agents: tools, dialogue, loops.**
 
-You declare what your agent may do as typed specs. agentkit renders them into the prompt (so the tool
-list cannot drift from your code), verifies the model's output against them (models invent opcodes — a
-fact to verify, not to prompt away), and gates every call by **reversibility**: reversible calls may
-run live, irreversible ones are captured as proposals on a path that physically cannot execute them.
+What you get:
 
-Around that gate sit budgeted loop primitives with agent-controlled termination, a hard round ceiling,
-and a degeneration guard.
+- **Tools** — declare what your agent may do as typed specs. agentkit renders them into the prompt
+  (so the tool list cannot drift from your code) and verifies the model's calls against them.
+- **Dialogue** — a typed contract for asking a human and getting an answer back.
+- **Loops** — five primitives, from one structured call to a tool loop that reflects on results.
+  Budgeted, with agent-controlled termination and a hard round ceiling.
+- **A safety gate** — every call is classified by reversibility. Reversible calls run live;
+  irreversible ones become proposals on a path that physically cannot execute them.
 
 **Go owns the write.** The loop returns a decision; it never persists.
 
