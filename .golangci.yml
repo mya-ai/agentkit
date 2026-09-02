@@ -1,0 +1,15 @@
+version: "2"
+
+run:
+  timeout: 5m
+  # tests: true so `unused` can see callers in *_test.go (test-only helpers are
+  # otherwise falsely reported dead), and so test code is linted too.
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - govet
+    - revive
+    - errcheck
+    - staticcheck
